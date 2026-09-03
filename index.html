@@ -93,8 +93,8 @@
                 <div>
                     <label class="block text-gray-400 text-xs font-semibold mb-1">Event Type *</label>
                     <select id="eventType" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-400" onchange="updatePreview()">
-                        <option value="Wedding">Wedding</option>
-			<option value="Reception">Reception</option>
+                        <option value="Wedding Reception">Wedding Reception</option>
+                        <option value="Birthday Party">Birthday Party</option>
                         <option value="Corporate Event">Corporate Event</option>
                         <option value="School Social / Formal">School Social / Formal</option>
                         <option value="Private Gathering">Private Gathering</option>
@@ -150,7 +150,7 @@
                 <div class="md:col-span-2 pt-2">
                     <button type="button" onclick="printReceipt()" class="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-amber-400/20 flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        Print Receipt / Save PDF
+                        Print Receipt / Save High-Res PDF
                     </button>
                 </div>
             </form>
@@ -192,12 +192,13 @@
                     </div>
 
                     <div class="mb-6">
-                        <p class="text-gray-400 uppercase tracking-wider font-bold text-[9px] mb-1">Day & Package Schedule</p>
+                        <p class="text-gray-400 uppercase tracking-wider font-bold text-[9px] mb-1">Day, Time & Package Schedule</p>
                         <table class="w-full text-left border-collapse border border-gray-200">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 uppercase text-[9px] tracking-wider border-b border-gray-200">
                                     <th class="py-1.5 px-2">Day</th>
                                     <th class="py-1.5 px-2">Date</th>
+                                    <th class="py-1.5 px-2">Time</th>
                                     <th class="py-1.5 px-2">Package Selected</th>
                                 </tr>
                             </thead>
@@ -253,6 +254,15 @@
 
         const packageOptions = ['Basic Package', 'Standard Package', 'Premium Package', 'Custom Package'];
 
+        function formatTime12hr(timeString) {
+            if (!timeString) return '';
+            const [hours, minutes] = timeString.split(':');
+            let h = parseInt(hours, 10);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${minutes} ${ampm}`;
+        }
+
         function renderDayInputs(savedDayData = null) {
             const daysCount = parseInt(document.getElementById('numberOfDays').value) || 1;
             const container = document.getElementById('dayInputsContainer');
@@ -260,9 +270,11 @@
 
             for (let i = 1; i <= daysCount; i++) {
                 const dayDiv = document.createElement('div');
-                dayDiv.className = 'bg-gray-950/60 p-3 rounded-xl border border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-2';
+                dayDiv.className = 'bg-gray-950/60 p-3 rounded-xl border border-gray-800 space-y-2';
                 
                 const defaultDate = savedDayData && savedDayData[i - 1] ? savedDayData[i - 1].date : '';
+                const defaultStartTime = savedDayData && savedDayData[i - 1] ? savedDayData[i - 1].startTime : '';
+                const defaultEndTime = savedDayData && savedDayData[i - 1] ? savedDayData[i - 1].endTime : '';
                 const defaultPkg = savedDayData && savedDayData[i - 1] ? savedDayData[i - 1].pkg : 'Basic Package';
 
                 let pkgOptionsHTML = packageOptions.map(pkg => 
@@ -270,15 +282,26 @@
                 ).join('');
 
                 dayDiv.innerHTML = `
-                    <div>
-                        <label class="block text-amber-400/90 text-[11px] font-bold mb-1">Day ${i} Date *</label>
-                        <input type="date" class="day-date-input w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400" value="${defaultDate}" onchange="updatePreview()">
-                    </div>
-                    <div>
-                        <label class="block text-amber-400/90 text-[11px] font-bold mb-1">Day ${i} Package *</label>
-                        <select class="day-pkg-input w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400" onchange="updatePreview()">
-                            ${pkgOptionsHTML}
-                        </select>
+                    <div class="text-amber-400 font-bold text-xs border-b border-gray-800 pb-1">Day ${i} Details</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-gray-400 text-[10px] font-semibold mb-0.5">Date *</label>
+                            <input type="date" class="day-date-input w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-400" value="${defaultDate}" onchange="updatePreview()">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-[10px] font-semibold mb-0.5">Package Selected *</label>
+                            <select class="day-pkg-input w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-400" onchange="updatePreview()">
+                                ${pkgOptionsHTML}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-[10px] font-semibold mb-0.5">Start Time</label>
+                            <input type="time" class="day-start-time w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-400" value="${defaultStartTime}" onchange="updatePreview()">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-[10px] font-semibold mb-0.5">End Time</label>
+                            <input type="time" class="day-end-time w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-400" value="${defaultEndTime}" onchange="updatePreview()">
+                        </div>
                     </div>
                 `;
                 container.appendChild(dayDiv);
@@ -309,9 +332,11 @@
             document.getElementById('rTotal').innerText = '$' + total.toFixed(2) + ' FJD';
             document.getElementById('rBalance').innerText = '$' + balance.toFixed(2) + ' FJD';
 
-            // Populate Day & Package Schedule Table
+            // Populate Day, Time & Package Schedule Table
             const dateInputs = document.querySelectorAll('.day-date-input');
             const pkgInputs = document.querySelectorAll('.day-pkg-input');
+            const startTimes = document.querySelectorAll('.day-start-time');
+            const endTimes = document.querySelectorAll('.day-end-time');
             const tableBody = document.getElementById('rDaysTableBody');
             
             tableBody.innerHTML = '';
@@ -320,11 +345,22 @@
                 const dayNum = index + 1;
                 const dayDate = input.value || 'Not set';
                 const dayPkg = pkgInputs[index].value;
+                
+                const sTime = formatTime12hr(startTimes[index].value);
+                const eTime = formatTime12hr(endTimes[index].value);
+                
+                let timeDisplay = 'Flexible';
+                if (sTime && eTime) {
+                    timeDisplay = `${sTime} - ${eTime}`;
+                } else if (sTime) {
+                    timeDisplay = `From ${sTime}`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="py-1.5 px-2 font-bold text-gray-800">Day ${dayNum}</td>
                     <td class="py-1.5 px-2 text-gray-700">${dayDate}</td>
+                    <td class="py-1.5 px-2 text-gray-600 font-medium">${timeDisplay}</td>
                     <td class="py-1.5 px-2 font-semibold text-amber-700">${dayPkg}</td>
                 `;
                 tableBody.appendChild(tr);
@@ -337,10 +373,15 @@
             const daysData = [];
             const dateInputs = document.querySelectorAll('.day-date-input');
             const pkgInputs = document.querySelectorAll('.day-pkg-input');
+            const startTimes = document.querySelectorAll('.day-start-time');
+            const endTimes = document.querySelectorAll('.day-end-time');
+
             dateInputs.forEach((input, index) => {
                 daysData.push({
                     date: input.value,
-                    pkg: pkgInputs[index].value
+                    pkg: pkgInputs[index].value,
+                    startTime: startTimes[index].value,
+                    endTime: endTimes[index].value
                 });
             });
 
@@ -425,7 +466,6 @@
                 return;
             }
 
-            // Triggers high quality native print dialog
             window.print();
         }
 
